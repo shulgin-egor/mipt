@@ -84,7 +84,6 @@ int Output(int nRoots, double x1, double x2)
     {
         if (nRoots == INFINITE_ROOTS)
         {
-            printf("<> nRoots= %d\n", nRoots);
             printf("Any real number");
         }
         else
