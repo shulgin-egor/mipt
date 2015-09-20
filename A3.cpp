@@ -35,7 +35,7 @@ int ReadIntInput (const char name[])
 {
     printf ("Input %s > ", name);
     double val = 0;
-    scanf ("%lg", &val);
+    scanf ("%d", &val);
     return val;
 }
 
