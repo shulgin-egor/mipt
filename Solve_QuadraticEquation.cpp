@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <float.h>
+#define INVALID_INPUT -1
 
 const int INFINITE_ROOTS = -1;
 
@@ -16,14 +17,17 @@ int main()
         printf ("# Enter coefficients a, b, c for ax^2+bx+c=0>\n");
         double coef_a = 0, coef_b = 0, coef_c = 0;
         coef_a = ReadDoubleInput("a"); coef_b = ReadDoubleInput("b"); coef_c = ReadDoubleInput("c");
-        printf ("\n");
-        double root_1 = 0, root_2 = 0;
-        int nRoots = 0;
+        if (coef_a != INVALID_INPUT && coef_b != INVALID_INPUT && coef_c != INVALID_INPUT){
+            printf ("\n");
+            double root_1 = 0, root_2 = 0;
+            int nRoots = 0;
 
-        nRoots = Solve_QuadraticEquation (coef_a, coef_b, coef_c, &root_1, &root_2);
-        //printf("nRoots = %d \n", nRoots);
-        Output (nRoots, root_1, root_2);
-        return 0;
+            nRoots = Solve_QuadraticEquation (coef_a, coef_b, coef_c, &root_1, &root_2);
+            //printf("nRoots = %d \n", nRoots);
+            Output (nRoots, root_1, root_2);
+            return 0;
+        }
+        else return 0;
     }
 
 
@@ -60,7 +64,17 @@ double ReadDoubleInput (const char name[])
     {
         printf ("Input %s > ",name);
         double val = 0;
-        scanf ("%lg", &val);
+        int scanf_check = 0;
+        while (1)
+        {
+            scanf_check = scanf ("%lg", &val);
+            if (scanf_check == 1) break;
+            else
+            {
+                printf ("Invalid input, pls restart the program \n");
+                return INVALID_INPUT;
+            }
+        }
         return val;
     }
 
