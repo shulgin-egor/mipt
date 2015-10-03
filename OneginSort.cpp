@@ -3,9 +3,12 @@
 #include <locale>
 
 #define FOPEN_ERROR NULL
+#define FREEBUFFER_ERROR -1
 
-long long FileLength (const char FilePath[], const char ReadMode[]);
-char* FileBuffer (const char FilePath[], const char ReadMode[], const long long FileLength);
+long long FileLength (FILE *InputFile);
+char* FileBuffer (FILE *InputFile, const long long FileLength);
+int FreeBuffer (char buffer[]);
+int CountNumberofLines (const char buffer[], const long long FileLength);
 FILE *FileOpen (char* FilePath, char* FOpenMode);
 
 int main()
@@ -25,53 +28,78 @@ int main()
     FILE *InputFile;
     InputFile = FileOpen (FilePath, ReadMode);
     if (InputFile == FOPEN_ERROR) return 0;
-    printf ("<%s>" "\n" "<%s>", FilePath, ReadMode);
+    printf ("\n-----------\n"
+            "<%s> <%s>"
+            "\n-----------\n", FilePath, ReadMode);
 
-    /*FILE* f = fopen ("input.txt", "rb");
-    fseek (f, 0, SEEK_END);
-    int len = 0;
-    len = ftell(f); printf ("--- %d --- \n", len);
-    rewind(f);
-    char* buffer = (char*)calloc(len, sizeof(*buffer));
-    fread (buffer, len, sizeof(*buffer), f);
-    printf ("\n" "%s-" "\n", buffer);
-    fclose(f); */
+    long long file_len = 0;
+    file_len = FileLength (InputFile)/*-8*/;
+    char* buffer = FileBuffer (InputFile, file_len);
 
-
-    //long long file_len = 0;
-    //file_len = FileLength ("input.txt", "rb")/*-8*/;
-    //char* buffer = FileBuffer ("input.txt", "rb", file_len);
-
-    //printf ("--------------\n" "<%s>" "\n--------------", buffer);
+    printf ("\n--------------\n" "<%s>" "\n--------------\n", buffer);
+    int nLines = 0;
+    nLines = CountNumberofLines (buffer, file_len);
+    printf ("nLines = %d" "\n", nLines);
 
 
-
-    //free (buffer);
-    //buffer = NULL;
+    fclose (InputFile);
+    int Buf_check = 1;
+    Buf_check = FreeBuffer (buffer);
+    if (Buf_check == FREEBUFFER_ERROR) return 0;
+   // free (buffer);
+   // buffer = NULL;
     return 1;
 }
 
-long long FileLength (const char FilePath[], const char ReadMode[])
+long long FileLength (FILE *InputFile)
 {
-    FILE* f = fopen (FilePath, ReadMode);
-    fseek (f, 0, SEEK_END);
+    //FILE* f = fopen (FilePath, ReadMode);
+    fseek (InputFile, 0, SEEK_END);
     long long len = 0;
-    len = ftell(f);
-    rewind (f);
-    fclose (f);
+    len = ftell(InputFile);
+    rewind (InputFile);
+    //fclose (InputFile);
 
     return len;
 }
 
-char* FileBuffer (const char FilePath[], const char ReadMode[], const long long FileLength)
+char* FileBuffer (FILE *InputFile, const long long FileLength)
 {
-    FILE* f = fopen (FilePath, ReadMode);
-    char* buffer = (char*)calloc(FileLength, sizeof(*buffer));
-    fread (buffer, FileLength, sizeof(*buffer), f);
-    rewind (f);
-    fclose (f);
+    //FILE* f = fopen (FilePath, ReadMode);
+    char* buffer = (char*) calloc (FileLength, sizeof(char));
+    fread (buffer, FileLength, sizeof(char), InputFile);
+    rewind (InputFile);
+    //fclose (f);
 
     return buffer;
+}
+
+int FreeBuffer (char buffer[])
+{
+    free (buffer);
+    if (buffer == NULL)
+    {
+        printf ("\n" "ERROR: Buffer is already NULL" "\n");
+        return FREEBUFFER_ERROR;
+    }
+    else
+    {
+        buffer = NULL;
+        return 1;
+    }
+}
+
+int CountNumberofLines (const char buffer[], const long long FileLength)
+{
+    int count = 0;
+    for (int i = 0; i << FileLength; i++)
+    {
+        printf (buffer[i]);
+        if (buffer[i] == "\n")
+            count++;
+    }
+    printf ("1. nLines = %d" "\n", count);
+    return count;
 }
 
 FILE *FileOpen (char* FilePath, char* FOpenMode)
