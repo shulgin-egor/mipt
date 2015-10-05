@@ -45,6 +45,7 @@ int main()
     long long file_len = 0;
     file_len = FileLength (InputFile);
     char* buffer = FileBuffer (InputFile, file_len);
+
     /*const char* bufCopy = (char*) calloc (file_len, sizeof(*buffer));
     memcpy(buffer, bufCopy, sizeof(buffer));
     printf("\n<%s>\n", bufCopy); */
@@ -57,13 +58,6 @@ int main()
     char** text = (char**) calloc (nLines, sizeof(**text));
     SplitBuffer (text, buffer, file_len, nLines);
 
-    char SortType[15] = "**********";
-    int sort_check = 1;
-    sort_check = TextSort (SortType, text, nLines);
-    if (sort_check == ERROR) return 0;
-
-    TextOut (text, nLines);
-
     fclose (InputFile);
     int Text_check = 1;
     Text_check = FreeText (text, nLines);
@@ -72,6 +66,13 @@ int main()
     int Buf_check = 1;
     Buf_check = FreeBuffer (buffer);
     if (Buf_check == ERROR) return 0;
+
+    char SortType[15] = "**********";
+    int sort_check = 1;
+    sort_check = TextSort (SortType, text, nLines);
+    if (sort_check == ERROR) return 0;
+
+    TextOut (text, nLines);
 
     return 1;
 }
