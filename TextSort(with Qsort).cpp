@@ -141,10 +141,10 @@ int CountNumberOfLines (const char buffer[], const long long FileLength)
     return count;
 }
 
-int SplitBuffer (char *text[], char buffer[], const long long FileLength, int NumberOfLines)
+int SplitBuffer (char* text[], char buffer[], const long long FileLength, int NumberOfLines)
 {
     //char** text = (char**) calloc (NumberOfLines, sizeof(**text));
-    int i = 0, j = 0, curlen = 0, begstr = 0;
+    int j = 0, curlen = 0, begstr = 0;
 
     for (int n = 0; n < NumberOfLines; n++)
     {
@@ -189,9 +189,24 @@ int RevStrCmp (const char str1[], const char str2[])
 {
     int len1 = strlen (str1) - 1;
     int len2 = strlen (str2) - 1;
-    bool f1 = false, f2 = false;
+    bool f1 = true, f2 = true;
 
-    while (len1 > 0 && len2 > 0 && !(f1 && f2))
+    /*while (len1 > 0 && len2 > 0 && !(f1 && f2))
+    {
+        f1 = f2 = true;
+        if (!my_isalpha(str1[len1]))
+        {
+            len1--;
+            f1 = false;
+        }
+
+        if (!my_isalpha(str2[len2]))
+        {
+            len2--;
+            f2 = false;
+        }*/
+
+    while (len1 > 0 && len2 > 0)
     {
         f1 = f2 = true;
         if (!my_isalpha(str1[len1]))
@@ -205,9 +220,15 @@ int RevStrCmp (const char str1[], const char str2[])
             len2--;
             f2 = false;
         }
-    }
 
-    return (str1[len1] > str2[len2])? 1 : 0;
+        if  (f1 && f2 && (str1[len1] > str2[len2])) return 1;
+        else
+        {
+            len1--;
+            len2--;
+        }
+    }
+    //return (str1[len1] > str2[len2])? 1 : 0;
 }
 
 void my_swap (char** str1, char** str2)
