@@ -14,7 +14,8 @@ int main()
 
     return 0;
 }
-//////////////////////////////////////////////////////////////////
+
+
 long long int SumOfDivisors (long long int n, long long int d = 1)
 {
     if (d <= n)
@@ -26,7 +27,7 @@ long long int SumOfDivisors (long long int n, long long int d = 1)
     }
     else return 0;
 }
-//////////////////////////////////////////////////////////////////
+
 long long int ReadIntInput (const char name[])
     {
         printf ("Input number %s> ",name);

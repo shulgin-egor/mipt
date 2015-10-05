@@ -23,6 +23,7 @@ int FreeText (char* text[], const int NumberOfLines);
 int RevStrCmp (const char str1[], const char str2[]);
 bool my_isalpha (const char symb);
 void my_swap (char** str1, char** str2);
+int str_eq (char* str1, char* str2);
 void TextSort (int (*compare) (const char str1[], const char str2[]), char* text[], int NumberOfLines);
 int TextOut (char* SortType, char* text[], int NumberOfLines);
 
@@ -53,8 +54,12 @@ int main()
     char** text = (char**) calloc (nLines, sizeof(**text));
     SplitBuffer (text, buffer, file_len, nLines);
 
-    TextOut ("", text, nLines);
+    char SortType[15] = "**********";
+    int out_check = 1;
+    out_check = TextOut (SortType, text, nLines);
+    if (out_check == ERROR) return 0;
 
+    //printf ("str_eq = %d", str_eq ("abc","abd"));
     fclose (InputFile);
     int Text_check = 1;
     Text_check = FreeText (text, nLines);
@@ -66,6 +71,7 @@ int main()
 
     return 1;
 }
+
 
 FILE* FileOpen (char* FilePath, char* FOpenMode)
 {
@@ -86,7 +92,6 @@ FILE* FileOpen (char* FilePath, char* FOpenMode)
     }
     else return InputFile;
 }
-
 
 long long FileLength (FILE *InputFile)
 {
@@ -125,39 +130,30 @@ int FreeBuffer (char buffer[])
 int CountNumberOfLines (const char buffer[], const long long FileLength)
 {
     int count = 0;
-    //printf (" %d ", FileLength);
     for (int i = 0; i < FileLength; i++)
-    {
-        //printf ("%c", buffer[i]);
         if (buffer[i] == '\n')
             count++;
-    }
-    //printf ("1. nLines = %d" "\n", count);
     return count;
 }
 
 int SplitBuffer (char *text[], char buffer[], const long long FileLength, int NumberOfLines)
 {
-    //printf ("\nSPLITBUFFER START\n");
-    //char** text = (char**) calloc(numberOfLines, sizeof(char));
-  //char** text = (char**) calloc (NumberOfLines, sizeof(**text));
-    //char *tempstr = (char*) calloc ()
+    //char** text = (char**) calloc (NumberOfLines, sizeof(**text));
     int i = 0, j = 0, curlen = 0, begstr = 0;
+
     for (int n = 0; n < NumberOfLines; n++)
     {
         begstr = j;
         while (j < FileLength && buffer[j] != '\r') j++;
-        //for (; j < FileLength && buffer[j] != '\n'; j++) printf (".%c", buffer[j]);
         buffer[j] = '\0';
         j += 2;
+        text[n] = &buffer[begstr];
         //curlen = j - begstr - 3;
         //char *bufstr = (char*) calloc (strlen, sizeof(char*));
         //my_string bufstr = {&buffer[j], curlen};
-        text[n] = &buffer[begstr]/*&bufstr*/;
         //my_string bufstr = {NULL, -1};
 
     }
-    //printf ("\nSPLITBUFFER END\n");
 }
 
 int FreeText (char* text[], const int NumberOfLines)
@@ -186,8 +182,8 @@ bool my_isalpha (const char symb)
 
 int RevStrCmp (const char str1[], const char str2[])
 {
-    int len1 = strlen (str1) - 1; //printf ("len1 = %d ", len1);
-    int len2 = strlen (str2) - 1; //printf ("len2 = %d\n\n", len2);
+    int len1 = strlen (str1) - 1;
+    int len2 = strlen (str2) - 1;
     bool f1 = false, f2 = false;
 
     while (len1 > 0 && len2 > 0 && !(f1 && f2))
@@ -197,16 +193,13 @@ int RevStrCmp (const char str1[], const char str2[])
         {
             len1--;
             f1 = false;
-            //printf ("FLAG1 ");
         }
-        //printf ("len1 = %d symbol = %c\n", len1, str1[len1]);
+
         if (!my_isalpha(str2[len2]))
         {
             len2--;
             f2 = false;
-            //printf ("FLAG2 ");
         }
-        //printf ("len2 = %d symbol = %c\n", len2, str2[len2]);
     }
 
     return (str1[len1] > str2[len2])? 1 : 0;
@@ -215,12 +208,8 @@ int RevStrCmp (const char str1[], const char str2[])
 void my_swap (char** str1, char** str2)
 {
     char *temp = *str1;;
-    //temp = strdup (str1);
-    //if (temp == NULL) printf ("!NULL");
     *str1 = *str2;
     *str2 = temp;
-    //free (temp);
-    //printf ("OK");
 }
 
 void TextSort (int (*compare) (const char str1[], const char str2[]), char* text[], int NumberOfLines)
@@ -231,13 +220,30 @@ void TextSort (int (*compare) (const char str1[], const char str2[]), char* text
                 my_swap (&text[i], &text[j]);
 }
 
+int str_eq (char* str1, char* str2)
+{
+    int len1 = strlen (str1);
+    int len2 = strlen (str2);
+
+    while (len1 > 0 && len2 > 0)
+    {
+        if (str1[len1] != str2[len2]) return 0;
+        len1--;
+        len2--;
+    }
+    return 1;
+}
+
 int TextOut (char* SortType, char* text[], int NumberOfLines)
 {
+    printf ("Available types of sort:" "\n"
+            " - SortFromBeg" "\n"
+            " - SortFromEnd" "\n");
     printf ("Input preferred type of sort: ");
     scanf ("%s", SortType);
-    if (SortType == "CmpFromBeg")
-        TextSort (&stricmp, text, NumberOfLines);
-    else if (SortType == "CmpFromEnd")
+    if (str_eq(SortType, "SortFromBeg"))
+        TextSort (&strcmp, text, NumberOfLines);
+    else if (str_eq(SortType, "SortFromEnd"))
             TextSort (&RevStrCmp, text, NumberOfLines);
          else
          {
@@ -257,6 +263,7 @@ int TextOut (char* SortType, char* text[], int NumberOfLines)
             return OUTERROR
             break
     }*/
+
     printf ("\n" "Sorted text:" "\n");
     for (int i = 0; i < NumberOfLines; i++)
         printf("%s\n", text[i]);

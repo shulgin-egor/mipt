@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <float.h>
+
 #define INVALID_INPUT -1
 
 const int INFINITE_ROOTS = -1;
