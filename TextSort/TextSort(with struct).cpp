@@ -1,6 +1,6 @@
 //{=================================================================================
 //! @file    TextSort.cpp
-//! @author  Egor Shulgin <dwarfegpr@yandex.ru>, 571 group
+//! @author  Egor Shulgin <dwarfegor@yandex.ru>, 571 group
 //!
 //! Sorting lines of Byron
 //!
@@ -14,8 +14,8 @@
 #include <assert.h>
 #include <locale>
 
-#define FOPEN_ERROR NULL
-#define ERROR -1
+#define PTR_ERROR NULL
+#define INT_ERROR -1
 #define OK 1
 
 #define MAXFILEPATH 260
@@ -33,7 +33,8 @@ struct my_string
  @return   *FILE_InputFile or FOPEN_ERROR
 
 ************************************************/
-FILE* FileOpen (char* FilePath, char* FOpenMode);
+FILE* FileOpen (const char* FilePath, const char* FOpenMode);
+
 /** ********************************************
  FileLength - calculates number of symbols in file.
 
@@ -41,6 +42,7 @@ FILE* FileOpen (char* FilePath, char* FOpenMode);
 
 ************************************************/
 long long FileLength (FILE* InputFile);
+
 /** ********************************************
  FileBuffer - reads all file into array of chars.
 
@@ -48,7 +50,9 @@ long long FileLength (FILE* InputFile);
 
 ***********************************************/
 char* FileBuffer (FILE* InputFile, const long long FileLength);
+
 int FreeBuffer (char buffer[]);
+void Buffer_Dump (const char buffer[]);
 
 /** *******************************************
  CountLines - counts number of lines in buffer.
@@ -57,7 +61,8 @@ int FreeBuffer (char buffer[]);
 
 ***********************************************/
 int CountLines (const char buffer[], const long long FileLength);
-void Text_Construct (my_string* text, char buffer[], const long long FileLength, int NumberOfLines);
+
+int Text_Construct (my_string* text, char buffer[], const long long FileLength, const int NumberOfLines);
 int Text_Destruct (my_string* text, const int NumberOfLines);
 
 bool my_isalpha (const char symb);
@@ -68,8 +73,8 @@ int RevStrCmp (const my_string* str1, const my_string* str2);
 int my_StrCmp (const my_string* str1, const my_string* str2);
 int CompSortFromBegin(const void* a, const void* b);
 int CompSortFromEnd(const void* a, const void* b);
-int TextSort (int SortType, my_string* text, int NumberOfLines);
-void TextOut (my_string* text, int NumberOfLines);
+int TextSort (int SortType, my_string* text, const int NumberOfLines);
+void TextOut (const my_string* text, const int NumberOfLines);
 
 
 int main()
@@ -77,18 +82,18 @@ int main()
     printf ("# Program by Shulgin E." "\n\n");
     //setlocale (LC_ALL, "Russian");      // If u want to sort a russian poem
 
-    char FilePath[MAXFILEPATH] = "***";
-    char ReadMode[MAXREADMODE] = "*";
+    char FilePath[MAXFILEPATH] = "Bayrone.txt";
+    char ReadMode[MAXREADMODE] = "rb";
 
-    FILE *InputFile;
-    InputFile = FileOpen (FilePath, ReadMode);
-    if (InputFile == FOPEN_ERROR) return 0;
+    FILE* InputFile = FileOpen (FilePath, ReadMode);
+    if (InputFile == PTR_ERROR) return -1;
 
-    long long file_len = 0;
-    file_len = FileLength (InputFile);
-    if (file_len == ERROR) return 0;
+    long long file_len = FileLength (InputFile);
+    if (file_len == INT_ERROR) return -1;
+
     char* buffer = FileBuffer (InputFile, file_len);
     fclose (InputFile);
+    if (buffer == PTR_ERROR) return -1;
     //printf ("\n--------------\n" "<%s>" "\n--------------\n", buffer);
     /*const char* bufCopy = (char*) calloc (file_len, sizeof(*buffer));
     memcpy(buffer, bufCopy, sizeof(buffer));
@@ -96,6 +101,7 @@ int main()
 
     int nLines = 0;
     nLines = CountLines (buffer, file_len);
+    if (nLines == INT_ERROR) return -1;
     //printf ("nLines = %d" "\n", nLines);
 
     my_string* text = (my_string*) calloc (nLines, sizeof(my_string*));
@@ -103,41 +109,43 @@ int main()
     TextOut (text, nLines);
 
     int SortType = 1;
-    int sort_check = 1;
-    sort_check = TextSort (SortType, text, nLines);
-    if (sort_check == ERROR) return 0;
+    printf ("Available types of sort:" "\n"
+            " 1) SortFromBeg" "\n"
+            " 2) SortFromEnd" "\n");
+    printf ("Input number of preferred sorting: ");
+    scanf ("%d", &SortType);
+    int sort_check = TextSort (SortType, text, nLines);
+    if (sort_check == INT_ERROR) return -1;
 
     printf ("\n" "Sorted text:" "\n");
     TextOut (text, nLines);
 
-    int Text_check = 1;
-    Text_check = Text_Destruct (text, nLines);
-    if (Text_check == ERROR) return 0;
+    int Text_check = Text_Destruct (text, nLines);
+    if (Text_check == INT_ERROR) return -1;
 
-    int Buf_check = 1;
-    Buf_check = FreeBuffer (buffer);
-    if (Buf_check == ERROR) return 0;
+    int Buf_check = FreeBuffer (buffer);
+    if (Buf_check == INT_ERROR) return -1;
 
     return 1;
 }
 
 
-FILE* FileOpen (char* FilePath, char* FOpenMode)
+FILE* FileOpen (const char* FilePath, const char* FOpenMode)
 {
     /*printf ("Input file path: ");
     scanf ("%s", FilePath);
     printf ("Input file open mode: ");
     scanf ("%s", FOpenMode);
-    */
-    FilePath = "input.txt";
-    FOpenMode= "rb";
-    FILE *InputFile;
-    InputFile = fopen (FilePath, FOpenMode);
+
+    FilePath = "Bayrone.txt";
+    FOpenMode= "rb";*/
+
+    FILE *InputFile = fopen (FilePath, FOpenMode);
     if (InputFile == NULL)
     {
-        printf ("\n" "ERROR: Could not find such file, "
-                     "please restart the program" "\n");
-        return FOPEN_ERROR;
+        printf ("\n" "ERROR: Could not find file '%s', "
+                     "please restart the program" "\n", FilePath);
+        return PTR_ERROR;
     }
     else return InputFile;
 }
@@ -148,7 +156,7 @@ long long FileLength (FILE *InputFile)
     if (check != 0)
     {
         printf ("\n" "ERROR: Probably file is not opened" "\n");
-        return ERROR;
+        return INT_ERROR;
     }
     long long len = 0;
     len = ftell(InputFile);
@@ -159,9 +167,20 @@ long long FileLength (FILE *InputFile)
 
 char* FileBuffer (FILE *InputFile, const long long FileLength)
 {
+    if (FileLength < 0)
+    {
+        printf ("\n" "ERROR: File Length (parameter 2) = %d < 0" "\n"
+                     "It must be natural (>=0)" "\n", FileLength);
+        return PTR_ERROR;
+    }
+    if (InputFile == NULL)
+    {
+        printf ("\n" "ERROR: InputFile (parameter 1) = NULL" "\n");
+        return PTR_ERROR;
+    }
     char *buffer = (char*) calloc (FileLength, sizeof(*buffer));
     fread (buffer, FileLength, sizeof(*buffer), InputFile);
-    rewind (InputFile);
+    //rewind (InputFile);
 
     return buffer;
 }
@@ -172,7 +191,7 @@ int FreeBuffer (char buffer[])
     if (buffer == NULL)
     {
         printf ("\n" "ERROR: Buffer is already NULL" "\n");
-        return ERROR;
+        return INT_ERROR;
     }
     else
     {
@@ -181,8 +200,25 @@ int FreeBuffer (char buffer[])
     }
 }
 
+void Buffer_Dump (const char buffer[])
+{
+    printf ("\n--------------\n" "<%s>" "\n--------------\n", buffer);
+}
+
 int CountLines (const char buffer[], const long long FileLength)
 {
+    if (FileLength < 0)
+    {
+        printf ("\n" "ERROR: File Length (parameter 2) = %d < 0" "\n"
+                     "It must be natural (>=0)" "\n", FileLength);
+        return INT_ERROR;
+    }
+    if (buffer == NULL)
+    {
+        printf ("\n" "ERROR: Buffer (parameter 1) = NULL" "\n");
+        return INT_ERROR;
+    }
+
     int count = 0;
     for (int i = 0; i < FileLength; i++)
         if (buffer[i] == '\n')
@@ -190,8 +226,26 @@ int CountLines (const char buffer[], const long long FileLength)
     return count;
 }
 
-void Text_Construct (my_string* text, char buffer[], const long long FileLength, int NumberOfLines)
+int Text_Construct (my_string* text, char buffer[], const long long FileLength, const int NumberOfLines)
 {
+    if (NumberOfLines < 0)
+    {
+        printf ("\n" "ERROR: Number Of Lines (parameter 3) = %d < 0" "\n"
+                     "It must be natural (>=0)" "\n", NumberOfLines);
+        return INT_ERROR;
+    }
+    if (FileLength < 0)
+    {
+        printf ("\n" "ERROR: File Length (parameter 3) = %d < 0" "\n"
+                     "It must be natural (>=0)" "\n", FileLength);
+        return INT_ERROR;
+    }
+    if (buffer == NULL)
+    {
+        printf ("\n" "ERROR: Buffer (parameter 2) = NULL" "\n");
+        return INT_ERROR;
+    }
+
     //char** text = (char**) calloc (NumberOfLines, sizeof(**text));
     int j = 0, curlen = 0, begstr = 0;
 
@@ -200,9 +254,12 @@ void Text_Construct (my_string* text, char buffer[], const long long FileLength,
         begstr = j;
         while (j < FileLength && buffer[j] != '\r') j++;
         buffer[j] = '\0';
+
         j += 2;
         curlen = j - begstr - 2;
+
         assert (begstr < FileLength);
+
         text[n].str = &buffer[begstr];
         text[n].len = curlen;
         //printf ("\n" "text[%d].str = '%s' text[%d].len = %d" "\n", n, text[n].str, n, curlen);
@@ -212,13 +269,20 @@ void Text_Construct (my_string* text, char buffer[], const long long FileLength,
 
 int Text_Destruct (my_string* text, const int NumberOfLines)
 {
+    if (NumberOfLines < 0)
+    {
+        printf ("\n" "ERROR: Number Of Lines (parameter 3) = %d < 0" "\n"
+                     "It must be natural (>=0)" "\n", NumberOfLines);
+        return INT_ERROR;
+    }
+
     for (int i = NumberOfLines; i >=0 ; i--)
     {
         free(text[i].str);
         if (text[i].str == NULL)
         {
             printf ("\n" "ERROR: text[%d] is already NULL" "\n", i);
-            return ERROR;
+            return INT_ERROR;
         }
         else
         {
@@ -231,14 +295,12 @@ int Text_Destruct (my_string* text, const int NumberOfLines)
 
 bool my_isalpha (const char symb)
 {
-    if (symb >= 'a' && symb <= 'z' || symb >= 'A' && symb <= 'Z') return true;
-    else return false;
+    return (symb >= 'a' && symb <= 'z' || symb >= 'A' && symb <= 'Z');
 }
 
 char ToCapitalLetter (const char letter)
 {
-    if (letter >= 'a' && letter <= 'z') return (char)(int(letter) - ('a' - 'A'));
-    else return letter;
+    return (letter >= 'a' && letter <= 'z')? (char)(int(letter) - ('a' - 'A')) : letter;
 }
 
 int RevStrCmp (const my_string* str1, const my_string* str2)
@@ -311,18 +373,30 @@ int CompSortFromEnd (const void* str1, const void* str2)
     return RevStrCmp(*(const my_string**) str1, *(const my_string**) str2);
 }
 
-int TextSort (int SortType, my_string* text, int NumberOfLines)
+int TextSort (int SortType, my_string* text, const int NumberOfLines)
 {
     /*for (int i = 0; i < NumberOfLines - 1; i++)
         for (int j = i + 1; j < NumberOfLines; j++)
             if ((*compare)(text[i], text[j]) == 0)
                 my_swap (&text[i], &text[j]); */
+    if (NumberOfLines < 0)
+    {
+        printf ("\n" "ERROR: Number Of Lines (parameter 3) = %d < 0" "\n"
+                     "It must be natural (>=0)" "\n", NumberOfLines);
+        return INT_ERROR;
+    }
+    if (text == NULL)
+    {
+        printf ("\n" "ERROR: Text (parameter 2) = NULL" "\n");
+        return INT_ERROR;
+    }
 
-    printf ("Available types of sort:" "\n"
+    /*printf ("Available types of sort:" "\n"
             " 1) SortFromBeg" "\n"
             " 2) SortFromEnd" "\n");
     printf ("Input number of preferred sorting: ");
-    scanf ("%d", &SortType);
+    scanf ("%d", &SortType);*/
+
     switch (SortType)
     {
         case (1):
@@ -333,8 +407,9 @@ int TextSort (int SortType, my_string* text, int NumberOfLines)
             break;
         default:
             printf ("ERROR: There is no such type of sort");
-            return ERROR;
+            return INT_ERROR;
     }
+
     /*if (str_eq(SortType, "SortFromBeg"))
         qsort(text, NumberOfLines, sizeof(text[0]), CompSortFromBegin);
     else if (str_eq(SortType, "SortFromEnd"))
@@ -347,13 +422,19 @@ int TextSort (int SortType, my_string* text, int NumberOfLines)
     return 1;
 }
 
-void TextOut (my_string* text, int NumberOfLines)
+void TextOut (const my_string* text, const int NumberOfLines)
 {
     //printf ("\n" "Sorted text:" "\n");
-    printf ("----------------------------------" "\n");
-    for (int i = 0; i < NumberOfLines; i++)
-        printf("%s\n", text[i].str);
-    printf ("----------------------------------" "\n");
+    if (NumberOfLines < 0)
+        printf ("\n" "ERROR: Number Of Lines (parameter 3) = %d < 0" "\n"
+                     "It must be natural (>=0)" "\n", NumberOfLines);
+    else
+    {
+        printf ("----------------------------------" "\n");
+        for (int i = 0; i < NumberOfLines; i++)
+            printf("%s\n", text[i].str);
+        printf ("----------------------------------" "\n");
+    }
     /*switch (SortType)
     {
         case "CmpFromBeg":
