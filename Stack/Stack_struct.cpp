@@ -6,15 +6,15 @@
 //#define __FILE__ __file__
 //#define __LINE__ __line__
 
-/*#define ASSERT_OK (type, what)                                  \
-    if (!type##_OK (what))                                      \
+/*#define ASSERT_OK (TYPE, what)                                  \
+    if (!TYPE##_OK (what))                                      \
     {                                                           \
         type##_Dump (what);                                     \
-        printf (#type "Failed in file: '%s'" "\n"               \
+        printf (#TYPE "Failed in file: '%s'" "\n"               \
                        "line: %d" "\n", __FILE__, __LINE__);    \
         if (ERROR) perror;                                      \
         abort();                                                \
-    }  */                                                         \
+    }*/                                                           \
 
 /*enum Commands
  {
@@ -24,7 +24,7 @@
     //cmdEnd = 3
  };*/
 
-const int MAX_STACK_SIZE = 100;
+const int MAX_STACK_SIZE = 10;
 const int DEFAULT_VALUE = 0;
 const int POISON_VALUE = -1;
 bool MY_ERROR = false;
@@ -49,7 +49,7 @@ void stack_constructor (stack_t* This)
     for (int i = 0; i < MAX_STACK_SIZE; i++) This->data[i] = DEFAULT_VALUE;
     This->next = &(This->data[0]);
 
-   // ASSERT_OK (stack_t*This);
+    //ASSERT_OK (stack_t*This);
 }
 
 void stack_destructor (stack_t* This)
@@ -70,6 +70,7 @@ bool stack_ok (const stack_t* This, const char function_name[])
         printf ("\n" "ERROR in (%s) : Stack is spoiled. "
                                     "This->next = NULL" "\n", function_name);
         MY_ERROR = true;
+        stack_dump (This);
         return 0;
     }
     if (This->nElements < 0)
@@ -77,6 +78,7 @@ bool stack_ok (const stack_t* This, const char function_name[])
         printf ("\n" "ERROR in (%s) : Stack is spoiled. "
                                     "This->nElements = %d < 0" "\n", function_name, This->nElements);
         MY_ERROR = true;
+        stack_dump (This);
         return 0;
     }
     else if (This->nElements < 0)
@@ -85,6 +87,7 @@ bool stack_ok (const stack_t* This, const char function_name[])
                                         "This->nElements = %d > %d (MAX_STACK_SIZE)" "\n",
                                          function_name, This->nElements, MAX_STACK_SIZE);
             MY_ERROR = true;
+            stack_dump (This);
             return 0;
         }
 
