@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <float.h>
 #include <math.h>
@@ -39,7 +40,7 @@ typedef struct
     int nElements;
 } stack_t;
 
-void stack_constructor (stack_t* This);
+stack_t* stack_constructor();
 void stack_destructor (stack_t* This);
 bool stack_ok (const stack_t* This, const char* function_name);
 void stack_dump (const stack_t* This);
@@ -54,17 +55,18 @@ STACK_TYPE stack_add (stack_t* This);
 STACK_TYPE stack_sub (stack_t* This);
 STACK_TYPE stack_mul (stack_t* This);
 STACK_TYPE stack_div (stack_t* This);
+STACK_TYPE stack_sqrt (stack_t* This);
 
 
-void stack_constructor (stack_t* This)
+stack_t* stack_constructor()
 {
-    assert (This);
-
+    //assert (This);
+    stack_t* This = (stack_t*) calloc (1, sizeof(stack_t));
     This->nElements = 0;
     for (int i = 0; i < MAX_STACK_SIZE; i++) This->data[i] = DEFAULT_VALUE;
     This->next = &(This->data[0]);
 
-    //ASSERT_OK (This);
+    return This;
 }
 
 void stack_destructor (stack_t* This)
@@ -75,6 +77,9 @@ void stack_destructor (stack_t* This)
     This->next = NULL;
     for (int i = 0; i < This->nElements; i++) This->data[i] = POISON_VALUE;
     This->nElements = POISON_VALUE;
+
+    free (This);
+    This = NULL;
 }
 
 bool stack_ok (const stack_t* This, const char* function_name)
@@ -146,7 +151,7 @@ void stack_out (stack_t* This)
 void stack_push (stack_t* This, const STACK_TYPE value)
 {
     assert (This);
-    if (!stack_ok (This, __FUNC__)) return;
+    if (!stack_ok (This, __FUNC__)) return;           //printf("\n stack_push value = %lg\n", value);
 
     if (This->nElements == MAX_STACK_SIZE)
     {
@@ -156,9 +161,12 @@ void stack_push (stack_t* This, const STACK_TYPE value)
         return;
     }
 
-    This->data[This->nElements] = value;
-    This->next = &(This->data[This->nElements]);
-    This->nElements++;
+    /*This->data[This->nElements] = value;
+    This->next = &(This->data[This->nElements]); */
+
+    if (++This->nElements > 1) This->next++;
+    *(This->next) = value;
+    //printf(" This->next = %lg\n", *(This->next));
 
     if (!stack_ok (This, __FUNC__)) return;
 }
@@ -176,16 +184,19 @@ STACK_TYPE stack_pop (stack_t* This)
         return MY_ERROR;
     }
 
-    This->nElements--;
-
     //This->next = (This->nElements) ? (&This->data[This->nElements]) : (&This->data[This->nElements - 1]);
-    if (This->nElements == 0)
+
+    /*if (This->nElements == 0)
         This->next = (&This->data[This->nElements]);
     else
-        This->next = (&This->data[This->nElements - 1]);
+        This->next = (&This->data[This->nElements - 1]);*/
 
+    STACK_TYPE temp = (*This->next);
+    if (--This->nElements >= 1) This->next--;
+                                                //printf("\n stack_pop = %lg\n", temp);
     if (!stack_ok (This, __FUNC__)) return MY_ERROR;
-    else return (*This->next);
+    else
+        return temp;
 }
 
 STACK_TYPE stack_add (stack_t* This)
@@ -201,11 +212,20 @@ STACK_TYPE stack_add (stack_t* This)
         return MY_ERROR;
     }
 
-    stack_pop (This);
+    /*stack_pop (This);
     //This->nElements--;
     int nElem = This->nElements;
     This->data[nElem - 1] = This->data[nElem - 1] + This->data[nElem];
-    //This->next = (&This->data[This->nElem - 1]);
+    //This->next = (&This->data[This->nElem - 1]); */
+
+    //STACK_TYPE temp = stack_pop (This) + stack_pop (This);
+    //STACK_TYPE temp2 = stack_pop (This);
+    //printf("\n stack_add temp1 = %lg ; temp2 = %lg\n", temp1, temp2);
+
+    //This->next--;
+    //*(This->next--) = stack_pop (This) + stack_pop (This);
+    stack_push (This, stack_pop (This) + stack_pop (This));
+
     if (!stack_ok (This, __FUNC__)) return MY_ERROR;
     else return (*This->next);
 }
@@ -223,9 +243,12 @@ STACK_TYPE stack_sub (stack_t* This)
         return MY_ERROR;
     }
 
-    stack_pop (This);
+    /*stack_pop (This);
     int nElem = This->nElements;
-    This->data[nElem - 1] = This->data[nElem - 1] - This->data[nElem];
+    This->data[nElem - 1] = This->data[nElem - 1] - This->data[nElem];*/
+
+    STACK_TYPE temp = stack_pop (This);
+    stack_push (This, stack_pop (This) - temp);
 
     if (!stack_ok (This, __FUNC__)) return MY_ERROR;
     else return (*This->next);
@@ -244,9 +267,10 @@ STACK_TYPE stack_mul (stack_t* This)
         return MY_ERROR;
     }
 
-    stack_pop (This);
+    /*stack_pop (This);
     int nElem = This->nElements;
-    This->data[nElem - 1] = This->data[nElem - 1] * This->data[nElem];
+    This->data[nElem - 1] = This->data[nElem - 1] * This->data[nElem]; */
+    stack_push (This, stack_pop (This) * stack_pop (This));
 
     if (!stack_ok (This, __FUNC__)) return MY_ERROR;
     else return (*This->next);
@@ -272,9 +296,41 @@ STACK_TYPE stack_div (stack_t* This)
         return MY_ERROR;
     }
 
-    stack_pop (This);
+    /*stack_pop (This);
     int nElem = This->nElements;
-    This->data[nElem - 1] = (STACK_TYPE)(This->data[nElem - 1] / This->data[nElem]);
+    This->data[nElem - 1] = (STACK_TYPE)(This->data[nElem - 1] / This->data[nElem]);*/
+
+    STACK_TYPE temp = stack_pop (This);
+    stack_push (This, stack_pop (This) / temp);
+
+    if (!stack_ok (This, __FUNC__)) return MY_ERROR;
+    else return (*This->next);
+}
+
+STACK_TYPE stack_sqrt (stack_t* This)
+{
+    assert (This);
+    if (!stack_ok (This, __FUNC__)) return MY_ERROR;
+
+    if (This->nElements == 0)
+    {
+        printf ("\n" "ERROR in (%s): No elements for SQRT" "\n", __FUNC__);
+        MY_ERROR = true;
+        stack_dump (This);
+        return MY_ERROR;
+    }
+
+    STACK_TYPE temp = stack_pop (This);
+
+    if (temp < 0)
+    {
+        printf ("\n" "ERROR in (%s): Can't take square root of minus quantity" "\n", __FUNC__);
+        MY_ERROR = true;
+        stack_dump (This);
+        return MY_ERROR;
+    }
+
+    stack_push (This, sqrt(temp));
 
     if (!stack_ok (This, __FUNC__)) return MY_ERROR;
     else return (*This->next);
