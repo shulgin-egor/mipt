@@ -56,6 +56,7 @@ STACK_TYPE stack_sub (stack_t* This);
 STACK_TYPE stack_mul (stack_t* This);
 STACK_TYPE stack_div (stack_t* This);
 STACK_TYPE stack_sqrt (stack_t* This);
+STACK_TYPE stack_dup (stack_t* This);
 
 
 stack_t* stack_constructor()
@@ -331,6 +332,28 @@ STACK_TYPE stack_sqrt (stack_t* This)
     }
 
     stack_push (This, sqrt(temp));
+
+    if (!stack_ok (This, __FUNC__)) return MY_ERROR;
+    else return (*This->next);
+}
+
+STACK_TYPE stack_dup (stack_t* This)
+{
+    assert (This);
+    if (!stack_ok (This, __FUNC__)) return MY_ERROR;
+
+    if (This->nElements == 0)
+    {
+        printf ("\n" "ERROR in (%s): No elements for DUP" "\n", __FUNC__);
+        MY_ERROR = true;
+        stack_dump (This);
+        return MY_ERROR;
+    }
+
+    STACK_TYPE temp = stack_pop (This);
+
+    stack_push (This, temp);
+    stack_push (This, temp);
 
     if (!stack_ok (This, __FUNC__)) return MY_ERROR;
     else return (*This->next);

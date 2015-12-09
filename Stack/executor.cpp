@@ -7,10 +7,15 @@
 #define INT_ERROR -1
 #define PTR_ERROR NULL
 
+#define FileName "binary.myexe"
+
 //const int MaxFuncName = 20;
 const int MaxJumpName = 15;
 const int MaxNJumps = 20;
-const int MaxFileName = 15;
+const int MaxRetAdr= 100;
+const int MaxFileName = 30;
+
+//const char FileName [MaxFileName] = "binary.myexe";
 
 typedef struct
 {
@@ -21,7 +26,7 @@ typedef struct
 
 char* MakeMachineCode (long long* CodeSize, jump_t arr_jumps[], int* NJumps);
 
-bool ExecuteCode (const char* MachineCode, jump_t arr_jumps[], const int* NJumps, long long CodeSize);
+bool ExecuteCode (const char* MachineCode, jump_t arr_jumps[], const int* NJumps, const long long CodeSize);
 
 void MachineCode_Dump (const char* MachineCode, long long CodeSize, jump_t arr_jumps[], const int* NJumps);
 
@@ -30,6 +35,7 @@ bool in (const char cur_jump[], jump_t arr_jumps[], const int NJumps);
 FILE* FileOpen (const char* FilePath, const char* FOpenMode);
 long long FileLength (FILE* InputFile, jump_t arr_jumps[], int* NJumps);
 char* FileBuffer (FILE *InputFile, const long long FileLength);
+
 
 int main()
 {
@@ -42,7 +48,7 @@ int main()
     char* MachineCode = MakeMachineCode (&CodeSize, arr_jumps, &NJumps);
     if (MachineCode == NULL) return 0;
 
-    MachineCode_Dump (MachineCode, CodeSize, arr_jumps, &NJumps);
+    //MachineCode_Dump (MachineCode, CodeSize, arr_jumps, &NJumps);
 
     //int t = 5;
     //char c = t;
@@ -53,11 +59,12 @@ int main()
     return 1;
 }
 
+
 char* MakeMachineCode (long long* CodeSize, jump_t arr_jumps[], int* NJumps)
 {
-    printf ("\nFunction (MakeMachineCode) start\n");
+    //printf ("\nFunction (MakeMachineCode) start\n");
 
-    char BinaryFName[MaxFileName] = "binary.myexe";
+    char BinaryFName[MaxFileName] = FileName;
     FILE* BinaryFile = FileOpen (BinaryFName, "r");
     if (BinaryFile == PTR_ERROR) return PTR_ERROR;
 
@@ -67,6 +74,12 @@ char* MakeMachineCode (long long* CodeSize, jump_t arr_jumps[], int* NJumps)
     //jump_t arr_jumps [MaxNJumps] = {};
 
     *CodeSize = FileLength (BinaryFile, arr_jumps, NJumps);
+    if (*CodeSize < 0)
+    {
+        printf ("\n" "ERROR in (%s): Wrong command '%d' in file '%s'" "\n", __FUNC__, cur_cmd, BinaryFName);
+        fclose (BinaryFile);
+        return PTR_ERROR;
+    }
 
     char* buffer = (char*) calloc (*CodeSize, sizeof(*buffer));
 
@@ -125,6 +138,12 @@ char* MakeMachineCode (long long* CodeSize, jump_t arr_jumps[], int* NJumps)
                 buffer[index++] = cur_cmd;
                 break;
             case (SQRT):
+                buffer[index++] = cur_cmd;
+                break;
+            case (DUP):
+                buffer[index++] = cur_cmd;
+                break;
+            case (IN):
                 buffer[index++] = cur_cmd;
                 break;
             case (JA):
@@ -207,6 +226,41 @@ char* MakeMachineCode (long long* CodeSize, jump_t arr_jumps[], int* NJumps)
 
                 break;
             }
+            case (JMP):
+            {
+                buffer[index++] = cur_cmd;
+
+                fscanf (BinaryFile, "%s", cur_jump);
+
+                for (i = 0; _stricmp (arr_jumps[i].name, cur_jump) != 0; i++);
+
+                *((int*)(buffer + index)) = arr_jumps[i].address;
+                index += sizeof(int);
+
+                break;
+            }
+            case (JUMP_VAR):
+                //buffer[index++] = cur_cmd;
+                fscanf (BinaryFile, "%s", cur_jump);
+                //index++;
+                break;
+            case (CALL):
+            {
+                buffer[index++] = cur_cmd;
+
+                fscanf (BinaryFile, "%s", cur_jump);
+
+                for (i = 0; _stricmp (arr_jumps[i].name, cur_jump) != 0; i++);
+
+                *((int*)(buffer + index)) = arr_jumps[i].address;
+                //printf ("***call address = %d", *((int*)(buffer + index)));
+                index += sizeof(int);
+
+                break;
+            }
+            case (RET):
+                buffer[index++] = cur_cmd;
+                break;
             case (FUNC_VAR):
                 //buffer[index++] = cur_cmd;
                 fscanf (BinaryFile, "%s", cur_jump);
@@ -231,7 +285,7 @@ char* MakeMachineCode (long long* CodeSize, jump_t arr_jumps[], int* NJumps)
     //for (int i = 0; i < *CodeSize; i++) printf ("<%c> ", buffer[i]);
     fclose (BinaryFile);
 
-    printf ("\nFunction (MakeMachineCode) end\n");
+    //printf ("\nFunction (MakeMachineCode) end\n");
 
     return buffer;
 }
@@ -241,24 +295,44 @@ void MachineCode_Dump (const char* MachineCode, long long CodeSize, jump_t arr_j
     assert(MachineCode);
 
     printf ("\n" "--------------MachineCode_Dump start--------------" "\n");
+
+    for (int i = 0; i < *NJumps; i++)
+    {
+        printf ("arr_jumps[%d].address = %d\n", i, arr_jumps[i].address);
+        printf ("arr_jumps[%d].name = %s" "\n\n", i, arr_jumps[i].name);
+    }
+
     for (int i = 0; i < CodeSize; i++) printf ("%d ", MachineCode[i]);
+
     printf ("\n" "--------------MachineCode_Dump end----------------" "\n");
 }
 
-bool ExecuteCode (const char* MachineCode, jump_t arr_jumps[], const int* NJumps, long long CodeSize)
+bool ExecuteCode (const char* MachineCode, jump_t arr_jumps[], const int* NJumps, const long long CodeSize)
 {
     assert(MachineCode);
 
+    if (CodeSize < 0)
+    {
+        printf ("\n" "ERROR in (%s): CodeSize = %d < 0" "\n", __FUNC__, NJumps);
+        return false;
+    }
+
+    if (*NJumps < 0)
+    {
+        printf ("\n" "ERROR in (%s): Number of jumps and functions = %d < 0" "\n", __FUNC__, *NJumps);
+        return false;
+    }
+
     //MachineCode_Dump (MachineCode, CodeSize);
 
-    printf ("\nFunction (ExecuteCode)\n");
+    //printf ("\nFunction (ExecuteCode)\n");
 
     cpu_t* cpu = cpu_constructor();
 
     //char register_name = '*';
-    int index = -1;
-    int temp = 0;
-    int i = 0;
+    int index = -1, temp = 0, i = 0, cur_adr = -1;
+    int ret_address [MaxRetAdr] = {};
+
     //printf("CodeSize = %d\n",CodeSize);
     //for (int i = 0; i < CodeSize; i++) printf ("%d ", MachineCode[i]); printf("\n");
     //printf ("<%c>", MachineCode[8]);
@@ -289,17 +363,8 @@ bool ExecuteCode (const char* MachineCode, jump_t arr_jumps[], const int* NJumps
                 break;
             }
             case (POP_X):
-            {
-                //temp = MachineCode[++index];
-                //temp = temp;
-                //register_name = MachineCode[++index];
-                //printf ("<%lg><'a' = %d><%d>", MachineCode[index], 'a', temp);
                 cpu_pop (cpu, MachineCode[++index]);
-                //char ch;
-                //fscanf (BinaryFile, "%c", &ch);
-                //buffer[index++] = ch;
                 break;
-            }
             case (POP):
                 stack_pop (cpu->stack);
                 break;
@@ -317,6 +382,14 @@ bool ExecuteCode (const char* MachineCode, jump_t arr_jumps[], const int* NJumps
                 break;
             case (SQRT):
                 stack_sqrt (cpu->stack);
+                break;
+            case (DUP):
+                stack_dup (cpu->stack);
+                break;
+            case (IN):
+                printf("Input ");
+                scanf ("%d", &temp);
+                stack_push (cpu->stack, temp);
                 break;
             case (JA):
             {
@@ -390,6 +463,31 @@ bool ExecuteCode (const char* MachineCode, jump_t arr_jumps[], const int* NJumps
 
                 break;
             }
+            case (JMP):
+            {
+                index++;
+                index = *((int*)(MachineCode + index)) - 1;
+                //printf ("\nJA index = %d\n", index);
+
+                break;
+            }
+            case (CALL):
+            {
+                ret_address [++cur_adr] = index + sizeof(int) + 1;
+                printf ("\nret address = %d\n", ret_address [cur_adr]); index++;
+
+                index = *((int*)(MachineCode + index)) - 1;
+                printf ("\ncall address = %d\n", index);
+
+                break;
+            }
+            case (RET):
+            {
+                index = ret_address [cur_adr--] - 1;
+                printf ("\nreturn address = %d\n", index);
+
+                break;
+            }
             default:
                 printf ("\n" "ERROR: Wrong command '%d' in (%s) '%s'" "\n", MachineCode[index], __FUNC__);
                 return false;
@@ -400,7 +498,7 @@ bool ExecuteCode (const char* MachineCode, jump_t arr_jumps[], const int* NJumps
 }
 
 bool in (const char cur_jump[], jump_t arr_jumps[], const int NJumps)
-{         //printf("\nfunc in: cur_jump = <%s>\n", cur_jump);
+{
     for (int i = 0; i < NJumps; i++)
     {
         if ( _stricmp (arr_jumps[i].name, cur_jump) == 0 )
@@ -490,6 +588,10 @@ long long FileLength (FILE* InputFile, jump_t arr_jumps[], int* NJumps)
                 break;
             case (SQRT):
                 break;
+            case (DUP):
+                break;
+            case (IN):
+                break;
             case (JA):
             {
                 fscanf (InputFile, "%s", cur_jump);
@@ -566,7 +668,18 @@ long long FileLength (FILE* InputFile, jump_t arr_jumps[], int* NJumps)
 
                 break;
             }
-            case (FUNC_VAR):
+            case (JMP):
+            {
+                fscanf (InputFile, "%s", cur_jump);
+
+                if (! in (cur_jump, arr_jumps, *NJumps + 1) )
+                    strcpy (arr_jumps[++(*NJumps)].name, cur_jump);
+
+                len += sizeof(int);
+
+                break;
+            }
+            case (JUMP_VAR):
             {
                 fscanf (InputFile, "%s", cur_jump);
                 cur_jump [strlen (cur_jump) - 1] = '\0'; //printf("strlen = %d", strlen (cur_jump));
@@ -574,13 +687,43 @@ long long FileLength (FILE* InputFile, jump_t arr_jumps[], int* NJumps)
                 if (! in (cur_jump, arr_jumps, *NJumps + 1) )
                     strcpy (arr_jumps[++(*NJumps)].name, cur_jump);
 
-                arr_jumps[*NJumps].address = --len;
+                for (int i = 0; i <= *NJumps; i++)
+                    if ( _stricmp (arr_jumps[i].name, cur_jump) == 0 )
+                        arr_jumps[i].address = --len;
 
                 /*printf("arr_jumps[%d].name = %s "
                        "arr_jumps[%d].address = %d\n",
                        *NJumps, arr_jumps[*NJumps].name, *NJumps , arr_jumps[*NJumps].address);*/
 
                 //len += strlen (cur_jump);
+
+                break;
+            }
+            case (CALL):
+            {
+                fscanf (InputFile, "%s", cur_jump);
+
+                if (! in (cur_jump, arr_jumps, *NJumps + 1) )
+                    strcpy (arr_jumps[++(*NJumps)].name, cur_jump);
+
+                len += sizeof(int);
+
+                break;
+            }
+            case (RET):
+                break;
+            case (FUNC_VAR):
+            {
+                fscanf (InputFile, "%s", cur_jump);
+
+                cur_jump [strlen (cur_jump) - 1] = '\0';
+
+                if (! in (cur_jump, arr_jumps, *NJumps + 1) )
+                    strcpy (arr_jumps[++(*NJumps)].name, cur_jump);
+
+                for (int i = 0; i <= *NJumps; i++)
+                    if ( _stricmp (arr_jumps[i].name, cur_jump) == 0 )
+                        arr_jumps[i].address = --len;
 
                 break;
             }

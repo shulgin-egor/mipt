@@ -3,6 +3,9 @@
 #include "Commands.cpp"
 //#include "Commands.cpp"
 
+#define ProgramName "factorial"
+//#define ProgramName "factorial"
+
 /*
 #define DEF_CMD(name, num)                  \
     if (stricmp (str, #name) == 0)          \
@@ -15,7 +18,7 @@
 //#define STANDART_PROG_NAME "program.in"
 //#define STANDART_BINARY_NAME "binary.myexe"
 
-const int MaxLenCmdName = 15;
+const int MaxCmdName = 15;
 
 void help_function();
 bool asm_function (const char* ProgFName, const char* BinaryFName);
@@ -26,7 +29,7 @@ int main (const int argc, char* argv[])
     printf ("# Assembler program by Shulgin E." "\n");
     //char* ProgFName = STANDART_PROG_NAME, BinaryFName = STANDART_BINARY_NAME;
 
-    char* ProgFName = "program.in";                 // Standard
+    char* ProgFName = ProgramName;                 // Standard
     char* BinaryFName = "binary.myexe";             // names
 
     if (argc == 1) return asm_function (ProgFName, BinaryFName);
@@ -73,7 +76,7 @@ bool asm_function (const char* ProgFName, const char* BinaryFName)
         return false;
     }
 
-    char cur_str[MaxLenCmdName] = "";
+    char cur_str[MaxCmdName] = "";
     double value = 0;
     //char* cur_str;
     /*
@@ -120,6 +123,10 @@ bool asm_function (const char* ProgFName, const char* BinaryFName)
             fprintf (BinaryFile, "%d\n", DIV);
         else if (_stricmp (cur_str, "sqrt") == 0)
             fprintf (BinaryFile, "%d\n", SQRT);
+        else if (_stricmp (cur_str, "dup") == 0)
+            fprintf (BinaryFile, "%d\n", DUP);
+        else if (_stricmp (cur_str, "in") == 0)
+            fprintf (BinaryFile, "%d\n", IN);
         else if (_stricmp (cur_str, "ja") == 0)
         {
             fprintf (BinaryFile, "%d ", JA);
@@ -156,8 +163,28 @@ bool asm_function (const char* ProgFName, const char* BinaryFName)
             fscanf (ProgramFile, "%s", cur_str);
             fprintf (BinaryFile, "%s\n", cur_str);
         }
+        else if (_stricmp (cur_str, "jmp") == 0)
+        {
+            fprintf (BinaryFile, "%d ", JMP);
+            fscanf (ProgramFile, "%s", cur_str);
+            fprintf (BinaryFile, "%s\n", cur_str);
+        }
         else if ( cur_str[strlen (cur_str) - 1] == ':')
-            fprintf (BinaryFile, "%d %s\n", FUNC_VAR, cur_str);
+            fprintf (BinaryFile, "%d %s\n", JUMP_VAR, cur_str);
+        else if (_stricmp (cur_str, "call") == 0)
+        {
+            fprintf (BinaryFile, "%d ", CALL);
+            fscanf (ProgramFile, "%s", cur_str);
+            fprintf (BinaryFile, "%s\n", cur_str);
+        }
+        else if (_stricmp (cur_str, "ret") == 0)
+            fprintf (BinaryFile, "%d\n", RET);
+        else if (_stricmp (cur_str, "function") == 0)
+        {
+            fprintf (BinaryFile, "%d ", FUNC_VAR);
+            fscanf (ProgramFile, "%s", cur_str);
+            fprintf (BinaryFile, "%s\n", cur_str);
+        }
     }
 
     fclose (ProgramFile);

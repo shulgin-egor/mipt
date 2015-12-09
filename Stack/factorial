@@ -1,0 +1,22 @@
+push 10
+push 1
+pop ax
+call factorial
+jmp exit
+function factorial:
+    dup
+    push 1
+    jae next
+    dup
+    push ax
+    mul
+    pop ax
+    push 1
+    sub
+    call factorial
+next:
+    ret
+exit:
+    push ax
+    out
+    end

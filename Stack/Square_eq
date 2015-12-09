@@ -1,0 +1,92 @@
+in
+pop ax
+in
+pop bx
+in
+pop cx
+push bx
+dup
+mul
+push 4
+push ax
+push cx
+mul
+mul
+sub
+pop dx
+jmp compare
+jmp1:
+    push 2
+    push dx
+    sqrt
+    pop dx
+    push -1
+    push bx
+    mul
+    push ax
+    div
+    pop bx
+    push dx
+    push ax
+    div
+    pop dx
+    push bx
+    push dx
+    sub
+    push 2
+    div
+    push bx
+    push dx
+    add
+    push 2
+    div
+    jmp exit
+jmp3:
+    push 1
+    push -1
+    push bx
+    mul
+    push ax
+    div
+    push 2
+    div
+    jmp exit
+jmp2:
+    push 0
+    jmp exit
+jmp4:
+    push bx
+    push 0
+    je jmp5
+    push 1
+    push cx
+    push bx
+    div
+    push -1
+    mul
+    jmp exit
+jmp5:
+    push cx
+    push 0
+    je jmp6
+    push 0
+    jmp exit
+jmp6:
+    push -1
+    jmp exit
+compare:
+    push ax
+    push 0
+    je jmp4
+    push dx
+    push 0
+    jb jmp1
+    push dx
+    push 0
+    ja jmp2
+    push dx
+    push 0
+    je jmp3
+exit:
+    out
+    end

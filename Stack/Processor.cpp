@@ -16,6 +16,7 @@ void cpu_dump (const cpu_t* This);
 void cpu_push (cpu_t* This, const char register_name);
 STACK_TYPE cpu_pop (cpu_t* This, const char register_name);
 
+
 /*int main()
 {
     cpu_t* cpu = cpu_constructor();
