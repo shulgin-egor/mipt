@@ -24,16 +24,18 @@ typedef struct
 } jump_t;
 
 
-char* MakeMachineCode (long long* CodeSize, jump_t arr_jumps[], int* NJumps);
+//char* MakeMachineCode (long long* CodeSize, jump_t arr_jumps[], int* NJumps);
+
+char* DownloadMachineCode (long long* CodeSize, jump_t arr_jumps[], int* NJumps);
 
 bool ExecuteCode (const char* MachineCode, jump_t arr_jumps[], const int* NJumps, const long long CodeSize);
 
-void MachineCode_Dump (const char* MachineCode, long long CodeSize, jump_t arr_jumps[], const int* NJumps);
+void MachineCode_Dump (const char* MachineCode, long long CodeSize, jump_t arr_jumps[], const int NJumps);
 
 bool in (const char cur_jump[], jump_t arr_jumps[], const int NJumps);
 
 FILE* FileOpen (const char* FilePath, const char* FOpenMode);
-long long FileLength (FILE* InputFile, jump_t arr_jumps[], int* NJumps);
+//long long FileLength (FILE* InputFile, jump_t arr_jumps[], int* NJumps);
 char* FileBuffer (FILE *InputFile, const long long FileLength);
 
 
@@ -45,14 +47,18 @@ int main()
     jump_t arr_jumps [MaxNJumps] = {};
     int NJumps = 0;
 
-    char* MachineCode = MakeMachineCode (&CodeSize, arr_jumps, &NJumps);
+    //char* MachineCode = MakeMachineCode (&CodeSize, arr_jumps, &NJumps);
+    //if (MachineCode == NULL) return 0;
+
+    char* MachineCode = DownloadMachineCode (&CodeSize, arr_jumps, &NJumps);
     if (MachineCode == NULL) return 0;
 
-    //MachineCode_Dump (MachineCode, CodeSize, arr_jumps, &NJumps);
+    /*printf ("\n******\n");
+    printf ("NJumps = %d\n", NJumps);
+    printf ("CodeSize = %d\n", CodeSize);
+    printf ("******\n"); */
 
-    //int t = 5;
-    //char c = t;
-    //printf ("<<<%d>>>", c);
+    //MachineCode_Dump (MachineCode, CodeSize, arr_jumps, NJumps);
 
     ExecuteCode (MachineCode, arr_jumps, &NJumps, CodeSize);
 
@@ -60,7 +66,7 @@ int main()
 }
 
 
-char* MakeMachineCode (long long* CodeSize, jump_t arr_jumps[], int* NJumps)
+/*char* MakeMachineCode (long long* CodeSize, jump_t arr_jumps[], int* NJumps)
 {
     //printf ("\nFunction (MakeMachineCode) start\n");
 
@@ -288,19 +294,58 @@ char* MakeMachineCode (long long* CodeSize, jump_t arr_jumps[], int* NJumps)
     //printf ("\nFunction (MakeMachineCode) end\n");
 
     return buffer;
+}*/
+
+char* DownloadMachineCode (long long* CodeSize, jump_t arr_jumps[], int* NJumps)
+{
+    char BinaryFName[MaxFileName] = "binary";
+    FILE* BinaryFile = FileOpen (BinaryFName, "r");
+    if (BinaryFile == PTR_ERROR) return PTR_ERROR;
+
+    int temp = 0;
+
+    /*fscanf (BinaryFile, "%d\n", NJumps);
+
+    int temp = 0;
+    char cur_jump [MaxJumpName] = "\0";
+
+    for (int i = 0; i < *NJumps; i++)
+    {
+        fscanf (BinaryFile, "%d ", &temp);
+        arr_jumps[i].address = temp;
+
+        fscanf (BinaryFile, "%s\n", cur_jump);
+        strcpy (arr_jumps[i].name, cur_jump);
+    }*/
+
+    fscanf (BinaryFile, "%d\n", CodeSize);
+
+    char* MachineCode = (char*) calloc (*CodeSize, sizeof(*MachineCode));
+
+    for (int i = 0; i < *CodeSize; i++)
+    {
+        fscanf (BinaryFile, "%d ", &temp);
+        MachineCode[i] = (char)temp;
+    }
+
+    return MachineCode;
 }
 
-void MachineCode_Dump (const char* MachineCode, long long CodeSize, jump_t arr_jumps[], const int* NJumps)
+void MachineCode_Dump (const char* MachineCode, long long CodeSize, jump_t arr_jumps[], const int NJumps)
 {
     assert(MachineCode);
 
     printf ("\n" "--------------MachineCode_Dump start--------------" "\n");
 
-    for (int i = 0; i < *NJumps; i++)
+    printf ("NJumps = %d\n", NJumps);
+
+    for (int i = 0; i < NJumps; i++)
     {
         printf ("arr_jumps[%d].address = %d\n", i, arr_jumps[i].address);
         printf ("arr_jumps[%d].name = %s" "\n\n", i, arr_jumps[i].name);
     }
+
+     printf ("CodeSize = %d\n", CodeSize);
 
     for (int i = 0; i < CodeSize; i++) printf ("%d ", MachineCode[i]);
 

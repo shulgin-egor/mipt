@@ -24,7 +24,7 @@ enum Commands
     JE = 12,
     JNE = 13,
     JMP = 14,
-    JUMP_VAR = 100,
+    JUMP_VAR = 39,
 
     CALL = 101,
     RET = 102,
